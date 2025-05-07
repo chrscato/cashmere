@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 """
-ocr_hcfa_s3.py
+ocr_hcfa.py
 
-Fetches HCFA PDFs from S3, runs OCR via Google Vision,
-writes extracted text back to S3, archives processed PDFs,
-and logs any errors.
+Fetches ProviderBill PDFs from S3, runs OCR via Google Vision,
+writes extracted text as JSON back to S3, and archives processed PDFs.
 """
 import os
 import sys
 import logging
 import tempfile
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 import boto3
 from google.cloud import vision
 from google.cloud.vision_v1 import types
+from datetime import datetime
 
 # Get the project root directory (2 levels up from this file)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -27,17 +28,17 @@ load_dotenv(PROJECT_ROOT / '.env')
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = str(PROJECT_ROOT / 'googlecloud.json')
 
 # Import S3 helper functions
-from utils.s3_utils import list_objects, download, upload, move
+from config.s3_utils import list_objects, download, upload, move
 
 # Initialize Vision API client
 vision_client = vision.ImageAnnotatorClient()
 
 # S3 prefixes
-INPUT_PREFIX = os.getenv('OCR_INPUT_PREFIX', 'data/hcfa_pdf/')
-ARCHIVE_PREFIX = os.getenv('OCR_ARCHIVE_PREFIX', 'data/hcfa_pdf/archived/')
-OUTPUT_PREFIX = os.getenv('OCR_OUTPUT_PREFIX', 'data/hcfa_txt/')
-LOG_PREFIX = os.getenv('OCR_LOG_PREFIX', 'logs/ocr_errors.log')
-S3_BUCKET = os.getenv('S3_BUCKET')
+INPUT_PREFIX = 'data/ProviderBills/pdf/'
+ARCHIVE_PREFIX = 'data/ProviderBills/pdf/archive/'
+OUTPUT_PREFIX = 'data/ProviderBills/txt/'
+LOG_PREFIX = 'logs/ocr_errors.log'
+S3_BUCKET = os.getenv('S3_BUCKET', 'bill-review-prod')
 
 
 def ocr_pdf_with_vision(local_pdf_path: str) -> str:
@@ -67,7 +68,7 @@ def ocr_pdf_with_vision(local_pdf_path: str) -> str:
 
 
 def process_ocr_s3():
-    """Process PDFs with OCR, save text output, and archive processed PDFs."""
+    """Process PDFs with OCR, save JSON output, and archive processed PDFs."""
     logger = logging.getLogger("OCR Processing")
     
     # List all PDFs in source folder (excluding archived)
@@ -97,16 +98,23 @@ def process_ocr_s3():
                 # Perform OCR
                 extracted = ocr_pdf_with_vision(str(local_pdf))
                 
-                # Write text locally
-                base_name = local_pdf.stem
-                local_txt = temp_path / f"{base_name}.txt"
-                with open(local_txt, 'w', encoding='utf-8') as f:
-                    f.write(extracted)
+                # Create JSON structure
+                base_name = local_pdf.stem  # This will be the ProviderBill ID
+                json_data = {
+                    "provider_bill_id": base_name,
+                    "ocr_text": extracted,
+                    "processed_at": datetime.now().isoformat()
+                }
+                
+                # Write JSON locally
+                local_json = temp_path / f"{base_name}.json"
+                with open(local_json, 'w', encoding='utf-8') as f:
+                    json.dump(json_data, f, indent=2)
 
-                # Upload text to S3
-                s3_txt_key = f"{OUTPUT_PREFIX}{base_name}.txt"
-                upload(str(local_txt), s3_txt_key)
-                logger.info(f"Saved OCR text: {s3_txt_key}")
+                # Upload JSON to S3
+                s3_json_key = f"{OUTPUT_PREFIX}{base_name}.json"
+                upload(str(local_json), s3_json_key)
+                logger.info(f"Saved OCR JSON: {s3_json_key}")
 
                 # Move processed PDF to archived folder
                 archive_key = f"{ARCHIVE_PREFIX}{pdf_name}"
