@@ -21,7 +21,7 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.append(str(project_root))
 load_dotenv(project_root / ".env")
 
-from utils.s3_utils import download  # Update this if using different helpers
+from config.s3_utils import download  # Update this if using different helpers
 
 def generate_pdf_sections(pdf_filename: str):
     logger = logging.getLogger("PDF Section Generator")
