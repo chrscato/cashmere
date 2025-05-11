@@ -1,0 +1,205 @@
+<!-- billing/webapp/bill_review/templates/bill_review/bill_detail.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Bill Details</h1>
+        <div>
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary me-2">Back to Dashboard</a>
+            <a href="{% url 'reset_bill' bill.id %}" class="btn btn-warning">Reset to MAPPED</a>
+        </div>
+    </div>
+
+    <!-- Bill Information -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Bill Information</h2>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Bill ID</dt>
+                        <dd class="col-sm-8">{{ bill.id }}</dd>
+
+                        <dt class="col-sm-4">Claim ID</dt>
+                        <dd class="col-sm-8">{{ bill.claim_id }}</dd>
+
+                        <dt class="col-sm-4">Patient</dt>
+                        <dd class="col-sm-8">{{ bill.patient_name }}</dd>
+
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge {% if bill.status == 'FLAGGED' %}bg-warning{% elif bill.status == 'ERROR' %}bg-danger{% else %}bg-info{% endif %}">
+                                {{ bill.status }}
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-4">Action</dt>
+                        <dd class="col-sm-8">{{ bill.action }}</dd>
+
+                        <dt class="col-sm-4">Total Charge</dt>
+                        <dd class="col-sm-8">${{ bill.total_charge }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <!-- Provider Information (if available) -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Provider Information</h2>
+                </div>
+                <div class="card-body">
+                    {% if provider %}
+                    <dl class="row">
+                        <dt class="col-sm-4">Name</dt>
+                        <dd class="col-sm-8">{{ provider.dba_name }}</dd>
+
+                        <dt class="col-sm-4">TIN</dt>
+                        <dd class="col-sm-8">{{ provider.tin }}</dd>
+
+                        <dt class="col-sm-4">Network Status</dt>
+                        <dd class="col-sm-8">{{ provider.provider_network }}</dd>
+                    </dl>
+                    {% else %}
+                    <p class="text-muted">No provider information available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Bill Status Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2 class="h5 mb-0">Update Bill Status</h2>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
+                        {{ form.status|add_class:"form-control" }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.action.id_for_label }}" class="form-label">Action</label>
+                        {{ form.action|add_class:"form-control" }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.last_error.id_for_label }}" class="form-label">Error Message</label>
+                        {{ form.last_error|add_class:"form-control" }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Line Items -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="h5 mb-0">Line Items</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>CPT Code</th>
+                            <th>Modifier</th>
+                            <th>Units</th>
+                            <th>Charge Amount</th>
+                            <th>Allowed Amount</th>
+                            <th>Decision</th>
+                            <th>Reason</th>
+                            <th>Date of Service</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in line_items %}
+                        <tr>
+                            <td>{{ item.cpt_code }}</td>
+                            <td>{{ item.modifier }}</td>
+                            <td>{{ item.units }}</td>
+                            <td>${{ item.charge_amount }}</td>
+                            <td>${{ item.allowed_amount }}</td>
+                            <td>
+                                <span class="badge {% if item.decision == 'approved' %}bg-success{% elif item.decision == 'denied' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {{ item.decision }}
+                                </span>
+                            </td>
+                            <td>{{ item.reason_code }}</td>
+                            <td>{{ item.date_of_service }}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editLineItem{{ item.id }}">
+                                    Edit
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Edit Line Item Modal -->
+                        <div class="modal fade" id="editLineItem{{ item.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form action="{% url 'line_item_update' item.id %}" method="post">
+                                        {% csrf_token %}
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Edit Line Item</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">CPT Code</label>
+                                                <input type="text" name="cpt_code" class="form-control" value="{{ item.cpt_code }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Modifier</label>
+                                                <input type="text" name="modifier" class="form-control" value="{{ item.modifier }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Units</label>
+                                                <input type="number" name="units" class="form-control" value="{{ item.units }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Charge Amount</label>
+                                                <input type="number" step="0.01" name="charge_amount" class="form-control" value="{{ item.charge_amount }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Allowed Amount</label>
+                                                <input type="number" step="0.01" name="allowed_amount" class="form-control" value="{{ item.allowed_amount }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Decision</label>
+                                                <select name="decision" class="form-control">
+                                                    <option value="pending" {% if item.decision == 'pending' %}selected{% endif %}>Pending</option>
+                                                    <option value="approved" {% if item.decision == 'approved' %}selected{% endif %}>Approved</option>
+                                                    <option value="reduced" {% if item.decision == 'reduced' %}selected{% endif %}>Reduced</option>
+                                                    <option value="denied" {% if item.decision == 'denied' %}selected{% endif %}>Denied</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Reason Code</label>
+                                                <input type="text" name="reason_code" class="form-control" value="{{ item.reason_code }}">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
