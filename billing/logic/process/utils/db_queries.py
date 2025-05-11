@@ -2,6 +2,7 @@
 
 import sqlite3
 from typing import Dict, List, Tuple, Optional, Any, Set
+import logging
 
 
 def get_db_connection(db_path: str = "monolith.db") -> sqlite3.Connection:
@@ -57,10 +58,15 @@ def get_order_details(order_id: str) -> Dict:
     cursor = conn.cursor()
     
     cursor.execute("""
-        SELECT * FROM orders
-        WHERE Order_ID = ?
+        SELECT o.*, p.PrimaryKey as provider_primary_key
+        FROM orders o
+        LEFT JOIN providers p ON o.provider_id = p.PrimaryKey
+        WHERE o.Order_ID = ?
     """, (order_id,))
     order = dict(cursor.fetchone())
+    
+    # Log the provider_id for debugging
+    logging.getLogger(__name__).debug(f"Order {order_id} provider_id: {order.get('provider_id')}")
     
     conn.close()
     return order
@@ -89,7 +95,7 @@ def get_provider_details(provider_id: str) -> Dict:
     
     cursor.execute("""
         SELECT 
-            "Name", "DBA Name Billing Name", "Billing Name", 
+            "DBA Name Billing Name", "Billing Name", 
             "Address Line 1", "Address Line 2", "City", "State", "Postal Code", 
             "Billing Address 1", "Billing Address 2", "Billing Address City", 
             "Billing Address State", "Billing Address Postal Code", 
@@ -133,20 +139,54 @@ def get_cpt_categories(cpt_codes: List[str]) -> Dict[str, Tuple[str, str]]:
     return results
 
 
+def clean_tin(tin: str) -> str:
+    """Clean TIN by removing dashes and spaces."""
+    return tin.replace('-', '').replace(' ', '').strip()
+
+
 def get_in_network_rate(tin: str, cpt_code: str, modifier: Optional[str] = None) -> Optional[float]:
     """Get in-network rate for a specific provider and CPT code."""
+    logger = logging.getLogger(__name__)
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("""
-        SELECT rate
-        FROM ppo
-        WHERE TIN = ? AND proc_cd = ? AND (modifier = ? OR (? IS NULL AND modifier IS NULL))
-        LIMIT 1
-    """, (tin, cpt_code, modifier, modifier))
+    # Clean the TIN
+    clean_tin_value = clean_tin(tin)
+    
+    # Only include modifier if it's TC or 26
+    effective_modifier = modifier if modifier in ['TC', '26'] else None
+    logger.info(f"Looking up in-network rate for TIN {clean_tin_value}, CPT {cpt_code}, modifier {effective_modifier}")
+    
+    if effective_modifier:
+        # If we have a TC or 26 modifier, only look for that specific rate
+        cursor.execute("""
+            SELECT rate
+            FROM ppo
+            WHERE REPLACE(REPLACE(TIN, '-', ''), ' ', '') = ? 
+            AND proc_cd = ? 
+            AND modifier = ?
+            LIMIT 1
+        """, (clean_tin_value, cpt_code, effective_modifier))
+    else:
+        # If no modifier or not TC/26, look for rate without modifier
+        cursor.execute("""
+            SELECT rate
+            FROM ppo
+            WHERE REPLACE(REPLACE(TIN, '-', ''), ' ', '') = ? 
+            AND proc_cd = ? 
+            AND (modifier IS NULL OR modifier = '')
+            LIMIT 1
+        """, (clean_tin_value, cpt_code))
     
     row = cursor.fetchone()
     rate = float(row['rate']) if row and row['rate'] else None
+    
+    if rate:
+        logger.info(f"Found in-network rate {rate} for CPT {cpt_code}" + 
+                   (f" with modifier {effective_modifier}" if effective_modifier else " without modifier"))
+    else:
+        logger.warning(f"No in-network rate found for CPT {cpt_code}" + 
+                      (f" with modifier {effective_modifier}" if effective_modifier else ""))
     
     conn.close()
     return rate
@@ -154,18 +194,44 @@ def get_in_network_rate(tin: str, cpt_code: str, modifier: Optional[str] = None)
 
 def get_out_of_network_rate(order_id: str, cpt_code: str, modifier: Optional[str] = None) -> Optional[float]:
     """Get out-of-network rate for a specific order and CPT code."""
+    logger = logging.getLogger(__name__)
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    cursor.execute("""
-        SELECT rate
-        FROM ota
-        WHERE ID_Order_PrimaryKey = ? AND CPT = ? AND (modifier = ? OR (? IS NULL AND modifier IS NULL))
-        LIMIT 1
-    """, (order_id, cpt_code, modifier, modifier))
+    # Only include modifier if it's TC or 26
+    effective_modifier = modifier if modifier in ['TC', '26'] else None
+    logger.info(f"Looking up out-of-network rate for order {order_id}, CPT {cpt_code}, modifier {effective_modifier}")
+    
+    if effective_modifier:
+        # If we have a TC or 26 modifier, only look for that specific rate
+        cursor.execute("""
+            SELECT rate
+            FROM ota
+            WHERE ID_Order_PrimaryKey = ? 
+            AND CPT = ? 
+            AND modifier = ?
+            LIMIT 1
+        """, (order_id, cpt_code, effective_modifier))
+    else:
+        # If no modifier or not TC/26, look for rate without modifier
+        cursor.execute("""
+            SELECT rate
+            FROM ota
+            WHERE ID_Order_PrimaryKey = ? 
+            AND CPT = ? 
+            AND (modifier IS NULL OR modifier = '')
+            LIMIT 1
+        """, (order_id, cpt_code))
     
     row = cursor.fetchone()
     rate = float(row['rate']) if row and row['rate'] else None
+    
+    if rate:
+        logger.info(f"Found out-of-network rate {rate} for CPT {cpt_code}" + 
+                   (f" with modifier {effective_modifier}" if effective_modifier else " without modifier"))
+    else:
+        logger.warning(f"No out-of-network rate found for CPT {cpt_code}" + 
+                      (f" with modifier {effective_modifier}" if effective_modifier else ""))
     
     conn.close()
     return rate

@@ -1,0 +1,218 @@
+{
+    "MR Arthrogram Shoulder": {
+      "bundle_type": "arthrogram",
+      "body_part": "shoulder",
+      "modality": "MR",
+      "description": "MRI arthrogram of the shoulder with injection",
+      "core_codes": ["73222", "23350"],
+      "optional_codes": ["77002"]
+    },
+    "CT Arthrogram Shoulder": {
+      "bundle_type": "arthrogram",
+      "body_part": "shoulder",
+      "modality": "CT",
+      "description": "CT arthrogram of the shoulder with injection",
+      "core_codes": ["73201", "23350"],
+      "optional_codes": ["77002"]
+    },
+    "XR Arthrogram Shoulder": {
+      "bundle_type": "arthrogram",
+      "body_part": "shoulder",
+      "modality": "XR",
+      "description": "X-ray arthrogram of the shoulder with injection",
+      "core_codes": ["73040", "23350"],
+      "optional_codes": ["77002"]
+    },
+    "MR Arthrogram Hip": {
+      "bundle_type": "arthrogram",
+      "body_part": "hip",
+      "modality": "MR",
+      "description": "MRI arthrogram of the hip with injection",
+      "core_codes": ["73722", "27093"],
+      "optional_codes": ["77002"]
+    },
+    "CT Arthrogram Hip": {
+      "bundle_type": "arthrogram",
+      "body_part": "hip",
+      "modality": "CT",
+      "description": "CT arthrogram of the hip with injection",
+      "core_codes": ["73701", "27093"],
+      "optional_codes": ["77002"]
+    },
+    "XR Arthrogram Hip": {
+      "bundle_type": "arthrogram",
+      "body_part": "hip",
+      "modality": "XR",
+      "description": "X-ray arthrogram of the hip with injection",
+      "core_codes": ["73525", "27093"],
+      "optional_codes": ["77002"]
+    },
+    "MR Arthrogram Knee": {
+      "bundle_type": "arthrogram",
+      "body_part": "knee",
+      "modality": "MR",
+      "description": "MRI arthrogram of the knee with injection",
+      "core_codes": ["73722", "27370"],
+      "optional_codes": ["77002"]
+    },
+    "CT Arthrogram Knee": {
+      "bundle_type": "arthrogram",
+      "body_part": "knee",
+      "modality": "CT",
+      "description": "CT arthrogram of the knee with injection",
+      "core_codes": ["73701", "27370"],
+      "optional_codes": ["77002"]
+    },
+    "XR Arthrogram Knee": {
+      "bundle_type": "arthrogram",
+      "body_part": "knee",
+      "modality": "XR",
+      "description": "X-ray arthrogram of the knee with injection",
+      "core_codes": ["73580", "27370"],
+      "optional_codes": ["77002"]
+    },
+    "MR Arthrogram Wrist": {
+      "bundle_type": "arthrogram",
+      "body_part": "wrist",
+      "modality": "MR",
+      "description": "MRI arthrogram of the wrist with injection",
+      "core_codes": ["73222", "25246"],
+      "optional_codes": ["77002"]
+    },
+    "CT Arthrogram Wrist": {
+      "bundle_type": "arthrogram",
+      "body_part": "wrist",
+      "modality": "CT",
+      "description": "CT arthrogram of the wrist with injection",
+      "core_codes": ["73201", "25246"],
+      "optional_codes": ["77002"]
+    },
+    "XR Arthrogram Wrist": {
+      "bundle_type": "arthrogram",
+      "body_part": "wrist",
+      "modality": "XR",
+      "description": "X-ray arthrogram of the wrist with injection",
+      "core_codes": ["73115", "25246"],
+      "optional_codes": ["77002"]
+    },
+    "MR Arthrogram Elbow": {
+      "bundle_type": "arthrogram",
+      "body_part": "elbow",
+      "modality": "MR",
+      "description": "MRI arthrogram of the elbow with injection",
+      "core_codes": ["73222", "24220"],
+      "optional_codes": ["77002"]
+    },
+    "MR Arthrogram Ankle": {
+      "bundle_type": "arthrogram",
+      "body_part": "ankle",
+      "modality": "MR",
+      "description": "MRI arthrogram of the ankle with injection",
+      "core_codes": ["73722", "27648"],
+      "optional_codes": ["77002"]
+    },
+    "Therapeutic Injection Shoulder": {
+      "bundle_type": "therapeutic_injection",
+      "body_part": "shoulder",
+      "modality": "injection",
+      "description": "Therapeutic injection of the shoulder under imaging guidance",
+      "core_codes": ["20610"],
+      "optional_codes": ["77002"]
+    },
+    "Therapeutic Injection Hip": {
+      "bundle_type": "therapeutic_injection",
+      "body_part": "hip",
+      "modality": "injection",
+      "description": "Therapeutic injection of the hip under imaging guidance",
+      "core_codes": ["20610"],
+      "optional_codes": ["77002"]
+    },
+    "Therapeutic Injection Knee": {
+      "bundle_type": "therapeutic_injection",
+      "body_part": "knee",
+      "modality": "injection",
+      "description": "Therapeutic injection of the knee under imaging guidance",
+      "core_codes": ["20610"],
+      "optional_codes": ["77002"]
+    },
+    "Therapeutic Injection Wrist": {
+      "bundle_type": "therapeutic_injection",
+      "body_part": "wrist",
+      "modality": "injection",
+      "description": "Therapeutic injection of the wrist under imaging guidance",
+      "core_codes": ["20605"],
+      "optional_codes": ["77002"]
+    },
+    "Therapeutic Injection Elbow": {
+      "bundle_type": "therapeutic_injection",
+      "body_part": "elbow",
+      "modality": "injection",
+      "description": "Therapeutic injection of the elbow under imaging guidance",
+      "core_codes": ["20605"],
+      "optional_codes": ["77002"]
+    },
+    "Therapeutic Injection Ankle": {
+      "bundle_type": "therapeutic_injection",
+      "body_part": "ankle",
+      "modality": "injection",
+      "description": "Therapeutic injection of the ankle under imaging guidance",
+      "core_codes": ["20605"],
+      "optional_codes": ["77002"]
+    },
+    "EMG Visit Standard": {
+      "bundle_type": "emg",
+      "body_part": null,
+      "modality": "emg",
+      "description": "Standard EMG visit with nerve conduction study and needle EMG",
+      "core_codes": ["95910", "95886"],
+      "optional_codes": ["99203"]
+    },
+    "EMG Visit Limited": {
+      "bundle_type": "emg",
+      "body_part": null,
+      "modality": "emg",
+      "description": "Limited EMG visit with nerve conduction study and limited needle EMG",
+      "core_codes": ["95910", "95885"],
+      "optional_codes": ["99203"]
+    },
+    "EMG Visit Comprehensive": {
+      "bundle_type": "emg",
+      "body_part": null,
+      "modality": "emg",
+      "description": "Comprehensive EMG visit with extended nerve conduction study and needle EMG",
+      "core_codes": ["95913", "95886"],
+      "optional_codes": ["99203"]
+    },
+    "EMG Visit Minimal": {
+      "bundle_type": "emg",
+      "body_part": null,
+      "modality": "emg",
+      "description": "Minimal EMG visit with limited nerve conduction study and limited needle EMG",
+      "core_codes": ["95909", "95885"],
+      "optional_codes": []
+    },
+    "CT Chest Abdomen Pelvis": {
+      "bundle_type": "ct_cap",
+      "body_part": "multiple",
+      "modality": "CT",
+      "description": "CT scan of the chest, abdomen and pelvis with contrast",
+      "core_codes": ["71260", "74177"],
+      "optional_codes": []
+    },
+    "CT Urogram": {
+      "bundle_type": "ct_urogram",
+      "body_part": "urinary",
+      "modality": "CT",
+      "description": "CT urogram (abdomen/pelvis without and with contrast for urinary system)",
+      "core_codes": ["74178"],
+      "optional_codes": []
+    },
+    "MRI Cholangiogram": {
+      "bundle_type": "mrcp",
+      "body_part": "abdomen",
+      "modality": "MR",
+      "description": "MRI cholangiogram for evaluation of biliary tract",
+      "core_codes": ["74183"],
+      "optional_codes": ["74181"]
+    }
+  }

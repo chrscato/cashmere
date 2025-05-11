@@ -1,4 +1,5 @@
 from typing import List
+from .db_queries import get_db_connection
 
 def update_order_line_items_reviewed(order_id: str, bill_id: str, cpt_codes: List[str]) -> bool:
     """

@@ -4,7 +4,8 @@ from typing import Dict, List, Tuple, Set, Optional
 import json
 import os
 from pathlib import Path
-from .db_utils import get_cpt_categories
+from .db_queries import get_cpt_categories
+import logging
 
 def load_ancillary_codes() -> Set[str]:
     """Load list of ancillary CPT codes that should be ignored in validation."""
@@ -34,6 +35,8 @@ def compare_cpt_codes(bill_items: List[Dict], order_items: List[Dict]) -> Dict:
         - category_matches: CPT codes that match by category but not code
         - category_mismatches: CPT codes with no category match
     """
+    logger = logging.getLogger(__name__)
+    
     # Get unique CPT codes from each source with counts
     billed_cpts = {}
     ordered_cpts = {}
@@ -42,11 +45,13 @@ def compare_cpt_codes(bill_items: List[Dict], order_items: List[Dict]) -> Dict:
         cpt = item['cpt_code'].strip() if item['cpt_code'] else ""
         if cpt:
             billed_cpts[cpt] = billed_cpts.get(cpt, 0) + 1
+            logger.debug(f"Billed CPT: {cpt}")
             
     for item in order_items:
         cpt = item['CPT'].strip() if item['CPT'] else ""
         if cpt:
             ordered_cpts[cpt] = ordered_cpts.get(cpt, 0) + 1
+            logger.debug(f"Ordered CPT: {cpt}")
     
     # Find exact matches and differences
     exact_matches = []
@@ -56,13 +61,17 @@ def compare_cpt_codes(bill_items: List[Dict], order_items: List[Dict]) -> Dict:
             'billed_count': billed_cpts[cpt],
             'ordered_count': ordered_cpts[cpt]
         })
+        logger.info(f"Exact match found for CPT {cpt}")
     
     billed_not_ordered = list(set(billed_cpts.keys()) - set(ordered_cpts.keys()))
     ordered_not_billed = list(set(ordered_cpts.keys()) - set(billed_cpts.keys()))
     
     # Filter out ancillary codes that should be ignored
     ancillary_codes = load_ancillary_codes()
+    logger.debug(f"Ancillary codes: {ancillary_codes}")
+    
     billed_not_ordered = [cpt for cpt in billed_not_ordered if cpt not in ancillary_codes]
+    ordered_not_billed = [cpt for cpt in ordered_not_billed if cpt not in ancillary_codes]
     
     # Get categories for codes that don't match exactly
     unmatched_cpts = billed_not_ordered + ordered_not_billed
@@ -77,6 +86,7 @@ def compare_cpt_codes(bill_items: List[Dict], order_items: List[Dict]) -> Dict:
     
     # Get category information
     categories = get_cpt_categories(unmatched_cpts)
+    logger.info(f"Category lookup results: {categories}")
     
     # Build category mapping
     billed_categories = {}
@@ -88,6 +98,7 @@ def compare_cpt_codes(bill_items: List[Dict], order_items: List[Dict]) -> Dict:
             if cat_key not in billed_categories:
                 billed_categories[cat_key] = []
             billed_categories[cat_key].append(cpt)
+            logger.info(f"Billed CPT {cpt} maps to category {cat_key}")
     
     for cpt in ordered_not_billed:
         if cpt in categories:
@@ -95,6 +106,7 @@ def compare_cpt_codes(bill_items: List[Dict], order_items: List[Dict]) -> Dict:
             if cat_key not in ordered_categories:
                 ordered_categories[cat_key] = []
             ordered_categories[cat_key].append(cpt)
+            logger.info(f"Ordered CPT {cpt} maps to category {cat_key}")
     
     # Find category matches
     category_matches = []
@@ -110,6 +122,7 @@ def compare_cpt_codes(bill_items: List[Dict], order_items: List[Dict]) -> Dict:
                     'category': cat_key[0],
                     'subcategory': cat_key[1]
                 })
+                logger.info(f"Category match: Billed CPT {billed_cpt} matches ordered CPTs {ordered_categories[cat_key]} in category {cat_key}")
         else:
             # No category match
             for billed_cpt in billed_cpts_in_cat:
@@ -118,6 +131,7 @@ def compare_cpt_codes(bill_items: List[Dict], order_items: List[Dict]) -> Dict:
                     'category': cat_key[0],
                     'subcategory': cat_key[1]
                 })
+                logger.info(f"No category match found for billed CPT {billed_cpt} in category {cat_key}")
     
     return {
         'exact_matches': exact_matches,

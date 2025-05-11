@@ -13,8 +13,10 @@ sys.path.append(str(project_root))
 # Import utilities
 from .utils.loader import load_mapped_bills, load_bill_data
 from .utils.validation import validate_provider_info, compare_cpt_codes, validate_units, load_ancillary_codes
-from .utils.db_utils import update_bill_status, update_line_item, update_order_line_items_reviewed
+from .utils.db_queries import update_bill_status, update_line_item
+from .utils.db_utils import update_order_line_items_reviewed
 from .utils.arthrogram import check_arthrogram
+from .utils.rate_validation import validate_bill_rates
 
 # Configure logging
 logging.basicConfig(
@@ -177,11 +179,21 @@ def process_bill(bill_id: str) -> Dict:
                     cpt_codes=matched_cpts
                 )
                 logger.info(f"Marked {len(matched_cpts)} non-ancillary order line items as reviewed for bill {bill_id}")
+            
+            # Step 6: Validate rates
+            rate_validation = validate_bill_rates(
+                bill_id=bill_id,
+                bill_items=bill_items,
+                provider=provider,
+                order_id=order['Order_ID']
+            )
+            
+            if not rate_validation['is_valid']:
+                logger.warning(f"Bill {bill_id}: {rate_validation['error']}")
+                return {"status": "FLAGGED", "message": rate_validation['error']}
                 
-            error_msg = "Non-ancillary CPT codes match between bill and order"
-            logger.info(f"Bill {bill_id}: {error_msg}")
-            update_bill_status(bill_id, "REVIEWED", "apply_rate", error_msg)
-            return {"status": "SUCCESS", "message": error_msg}
+            logger.info(f"Bill {bill_id} passed rate validation")
+            return {"status": "SUCCESS", "message": "Bill processed successfully"}
             
         # If we get here, something unexpected happened
         error_msg = "Unexpected CPT code validation result"

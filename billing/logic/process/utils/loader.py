@@ -2,7 +2,7 @@
 
 from typing import List, Dict, Optional, Tuple
 import logging
-from .db_utils import get_db_connection, get_bill_with_line_items, get_order_details, get_order_line_items, get_provider_details
+from .db_queries import get_db_connection, get_bill_with_line_items, get_order_details, get_order_line_items, get_provider_details
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,15 @@ def load_bill_data(bill_id: str) -> Tuple[Dict, List[Dict], Dict, List[Dict], Op
             
             # Get provider if available
             if order.get('provider_id'):
-                provider = get_provider_details(order['provider_id'])
+                provider_id = order['provider_id']
+                logger.debug(f"Order {order_id} has provider_id: {provider_id}")
+                provider = get_provider_details(provider_id)
+                if provider:
+                    logger.debug(f"Provider details loaded: {provider}")
+                else:
+                    logger.warning(f"Provider details not found for provider_id: {provider_id}")
+            else:
+                logger.warning(f"Order {order_id} has no provider_id")
                 
         except Exception as e:
             logger.error(f"Error loading order data: {str(e)}")

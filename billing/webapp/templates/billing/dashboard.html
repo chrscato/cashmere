@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Billing Processing Dashboard</h1>
+
+    <!-- Flagged Bills -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-white">
+            <h2 class="h5 mb-0">Flagged Bills ({{ flagged_bills|length }})</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Claim ID</th>
+                            <th>Provider</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                            <th>Error</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in flagged_bills %}
+                        <tr>
+                            <td>{{ bill.id }}</td>
+                            <td>{{ bill.claim_id }}</td>
+                            <td>{{ bill.provider_name }}</td>
+                            <td><span class="badge bg-warning">{{ bill.status }}</span></td>
+                            <td>{{ bill.action }}</td>
+                            <td>{{ bill.last_error }}</td>
+                            <td>{{ bill.created_at }}</td>
+                            <td>
+                                <a href="{% url 'bill_detail' bill.id %}" class="btn btn-sm btn-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Bills -->
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h2 class="h5 mb-0">Error Bills ({{ error_bills|length }})</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Claim ID</th>
+                            <th>Provider</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                            <th>Error</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in error_bills %}
+                        <tr>
+                            <td>{{ bill.id }}</td>
+                            <td>{{ bill.claim_id }}</td>
+                            <td>{{ bill.provider_name }}</td>
+                            <td><span class="badge bg-danger">{{ bill.status }}</span></td>
+                            <td>{{ bill.action }}</td>
+                            <td>{{ bill.last_error }}</td>
+                            <td>{{ bill.created_at }}</td>
+                            <td>
+                                <a href="{% url 'bill_detail' bill.id %}" class="btn btn-sm btn-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Arthrogram Bills -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h2 class="h5 mb-0">Arthrogram Bills ({{ arthrogram_bills|length }})</h2>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Claim ID</th>
+                            <th>Provider</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                            <th>Error</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bill in arthrogram_bills %}
+                        <tr>
+                            <td>{{ bill.id }}</td>
+                            <td>{{ bill.claim_id }}</td>
+                            <td>{{ bill.provider_name }}</td>
+                            <td><span class="badge bg-info">{{ bill.status }}</span></td>
+                            <td>{{ bill.action }}</td>
+                            <td>{{ bill.last_error }}</td>
+                            <td>{{ bill.created_at }}</td>
+                            <td>
+                                <a href="{% url 'bill_detail' bill.id %}" class="btn btn-sm btn-primary">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
