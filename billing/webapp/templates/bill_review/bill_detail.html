@@ -1,108 +1,210 @@
 <!-- billing/webapp/bill_review/templates/bill_review/bill_detail.html -->
 {% extends "base.html" %}
+{% load widget_tweaks %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Bill Details</h1>
         <div>
-            <a href="{% url 'dashboard' %}" class="btn btn-secondary me-2">Back to Dashboard</a>
-            <a href="{% url 'reset_bill' bill.id %}" class="btn btn-warning">Reset to MAPPED</a>
+            <a href="{% url 'bill_review:dashboard' %}" class="btn btn-secondary me-2">Back to Dashboard</a>
+            <form method="post" action="{% url 'bill_review:reset_bill' bill.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning" onclick="return confirm('Reset this bill to MAPPED status?')">
+                    Reset to MAPPED
+                </button>
+            </form>
         </div>
     </div>
 
     <!-- Bill Information -->
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">Bill Information</h2>
-                </div>
-                <div class="card-body">
-                    <dl class="row">
-                        <dt class="col-sm-4">Bill ID</dt>
-                        <dd class="col-sm-8">{{ bill.id }}</dd>
-
-                        <dt class="col-sm-4">Claim ID</dt>
-                        <dd class="col-sm-8">{{ bill.claim_id }}</dd>
-
-                        <dt class="col-sm-4">Patient</dt>
-                        <dd class="col-sm-8">{{ bill.patient_name }}</dd>
-
-                        <dt class="col-sm-4">Status</dt>
-                        <dd class="col-sm-8">
-                            <span class="badge {% if bill.status == 'FLAGGED' %}bg-warning{% elif bill.status == 'ERROR' %}bg-danger{% else %}bg-info{% endif %}">
-                                {{ bill.status }}
-                            </span>
-                        </dd>
-
-                        <dt class="col-sm-4">Action</dt>
-                        <dd class="col-sm-8">{{ bill.action }}</dd>
-
-                        <dt class="col-sm-4">Total Charge</dt>
-                        <dd class="col-sm-8">${{ bill.total_charge }}</dd>
-                    </dl>
+    <div class="accordion mb-4" id="billAccordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#billInfo">
+                    Bill Information
+                </button>
+            </h2>
+            <div id="billInfo" class="accordion-collapse collapse show" data-bs-parent="#billAccordion">
+                <div class="accordion-body">
+                    <form method="post" action="{% url 'bill_review:update_bill' bill.id %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Bill ID</label>
+                                    <input type="text" class="form-control" value="{{ bill.id }}" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Claim ID</label>
+                                    <input type="text" class="form-control" value="{{ bill.claim_id }}" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Patient Name</label>
+                                    <input type="text" class="form-control" value="{{ bill.patient_name }}" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    {{ form.status|add_class:"form-select" }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Action</label>
+                                    {{ form.action|add_class:"form-select" }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Error Message</label>
+                                    {{ form.last_error|add_class:"form-control" }}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Created At</label>
+                                    <input type="text" class="form-control" value="{{ bill.created_at|date:'Y-m-d H:i' }}" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Bill</button>
+                    </form>
                 </div>
             </div>
         </div>
 
-        <!-- Provider Information (if available) -->
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2 class="h5 mb-0">Provider Information</h2>
-                </div>
-                <div class="card-body">
+        <!-- Provider Information -->
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#providerInfo">
+                    Provider Information
+                </button>
+            </h2>
+            <div id="providerInfo" class="accordion-collapse collapse" data-bs-parent="#billAccordion">
+                <div class="accordion-body">
                     {% if provider %}
-                    <dl class="row">
-                        <dt class="col-sm-4">Name</dt>
-                        <dd class="col-sm-8">{{ provider.dba_name }}</dd>
-
-                        <dt class="col-sm-4">TIN</dt>
-                        <dd class="col-sm-8">{{ provider.tin }}</dd>
-
-                        <dt class="col-sm-4">Network Status</dt>
-                        <dd class="col-sm-8">{{ provider.provider_network }}</dd>
-                    </dl>
+                    <form method="post" action="{% url 'bill_review:update_provider' provider.PrimaryKey %}">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">DBA Name / Billing Name</label>
+                                    <input type="text" name="dba_name" class="form-control" value="{{ provider.DBA_Name_Billing_Name }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Billing Name</label>
+                                    <input type="text" name="billing_name" class="form-control" value="{{ provider.Billing_Name }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Address Line 1</label>
+                                    <input type="text" name="address1" class="form-control" value="{{ provider.Address_Line_1 }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Address Line 2</label>
+                                    <input type="text" name="address2" class="form-control" value="{{ provider.Address_Line_2 }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">City</label>
+                                    <input type="text" name="city" class="form-control" value="{{ provider.City }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">State</label>
+                                    <input type="text" name="state" class="form-control" value="{{ provider.State }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Postal Code</label>
+                                    <input type="text" name="postal_code" class="form-control" value="{{ provider.Postal_Code }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">TIN</label>
+                                    <input type="text" name="tin" class="form-control" value="{{ provider.TIN }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">NPI</label>
+                                    <input type="text" name="npi" class="form-control" value="{{ provider.NPI }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Provider Network</label>
+                                    <input type="text" name="network" class="form-control" value="{{ provider.Provider_Network }}">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Provider</button>
+                    </form>
                     {% else %}
                     <p class="text-muted">No provider information available</p>
                     {% endif %}
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Update Bill Status Form -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h2 class="h5 mb-0">Update Bill Status</h2>
-        </div>
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
-                        {{ form.status|add_class:"form-control" }}
+        <!-- Order Information -->
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#orderInfo">
+                    Order Information
+                </button>
+            </h2>
+            <div id="orderInfo" class="accordion-collapse collapse" data-bs-parent="#billAccordion">
+                <div class="accordion-body">
+                    {% if order %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Order ID</dt>
+                                <dd class="col-sm-8">{{ order.Order_ID }}</dd>
+
+                                <dt class="col-sm-4">Bundle Type</dt>
+                                <dd class="col-sm-8">{{ order.bundle_type }}</dd>
+
+                                <dt class="col-sm-4">Order Date</dt>
+                                <dd class="col-sm-8">{{ order.Order_Date|date:"Y-m-d" }}</dd>
+
+                                <dt class="col-sm-4">Patient ID</dt>
+                                <dd class="col-sm-8">{{ order.Patient_ID }}</dd>
+
+                                <dt class="col-sm-4">Provider ID</dt>
+                                <dd class="col-sm-8">{{ order.provider_id }}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Order Line Items</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Line #</th>
+                                            <th>CPT</th>
+                                            <th>Modifier</th>
+                                            <th>Units</th>
+                                            <th>Charge</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in order_line_items %}
+                                        <tr>
+                                            <td>{{ item.line_number }}</td>
+                                            <td>{{ item.CPT }}</td>
+                                            <td>{{ item.modifier|default:"-" }}</td>
+                                            <td>{{ item.units }}</td>
+                                            <td>${{ item.charge_amount }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="{{ form.action.id_for_label }}" class="form-label">Action</label>
-                        {{ form.action|add_class:"form-control" }}
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="{{ form.last_error.id_for_label }}" class="form-label">Error Message</label>
-                        {{ form.last_error|add_class:"form-control" }}
-                    </div>
+                    {% else %}
+                    <p class="text-muted">No order information available</p>
+                    {% endif %}
                 </div>
-                <button type="submit" class="btn btn-primary">Update</button>
-            </form>
+            </div>
         </div>
     </div>
 
     <!-- Line Items -->
     <div class="card">
         <div class="card-header">
-            <h2 class="h5 mb-0">Line Items</h2>
+            <h2 class="h5 mb-0">Bill Line Items</h2>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -124,17 +226,17 @@
                         {% for item in line_items %}
                         <tr>
                             <td>{{ item.cpt_code }}</td>
-                            <td>{{ item.modifier }}</td>
+                            <td>{{ item.modifier|default:"-" }}</td>
                             <td>{{ item.units }}</td>
                             <td>${{ item.charge_amount }}</td>
-                            <td>${{ item.allowed_amount }}</td>
+                            <td>${{ item.allowed_amount|default:"-" }}</td>
                             <td>
                                 <span class="badge {% if item.decision == 'approved' %}bg-success{% elif item.decision == 'denied' %}bg-danger{% else %}bg-secondary{% endif %}">
                                     {{ item.decision }}
                                 </span>
                             </td>
-                            <td>{{ item.reason_code }}</td>
-                            <td>{{ item.date_of_service }}</td>
+                            <td>{{ item.reason_code|default:"-" }}</td>
+                            <td>{{ item.date_of_service|date:"Y-m-d" }}</td>
                             <td>
                                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editLineItem{{ item.id }}">
                                     Edit
@@ -146,7 +248,7 @@
                         <div class="modal fade" id="editLineItem{{ item.id }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">
-                                    <form action="{% url 'line_item_update' item.id %}" method="post">
+                                    <form action="{% url 'bill_review:line_item_update' item.id %}" method="post">
                                         {% csrf_token %}
                                         <div class="modal-header">
                                             <h5 class="modal-title">Edit Line Item</h5>
@@ -155,7 +257,7 @@
                                         <div class="modal-body">
                                             <div class="mb-3">
                                                 <label class="form-label">CPT Code</label>
-                                                <input type="text" name="cpt_code" class="form-control" value="{{ item.cpt_code }}">
+                                                <input type="text" name="cpt_code" class="form-control" value="{{ item.cpt_code }}" required>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Modifier</label>
@@ -163,11 +265,11 @@
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Units</label>
-                                                <input type="number" name="units" class="form-control" value="{{ item.units }}">
+                                                <input type="number" name="units" class="form-control" value="{{ item.units }}" required min="1">
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Charge Amount</label>
-                                                <input type="number" step="0.01" name="charge_amount" class="form-control" value="{{ item.charge_amount }}">
+                                                <input type="number" step="0.01" name="charge_amount" class="form-control" value="{{ item.charge_amount }}" required>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Allowed Amount</label>
@@ -175,7 +277,7 @@
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Decision</label>
-                                                <select name="decision" class="form-control">
+                                                <select name="decision" class="form-select" required>
                                                     <option value="pending" {% if item.decision == 'pending' %}selected{% endif %}>Pending</option>
                                                     <option value="approved" {% if item.decision == 'approved' %}selected{% endif %}>Approved</option>
                                                     <option value="reduced" {% if item.decision == 'reduced' %}selected{% endif %}>Reduced</option>
